@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llmbench"
+version = "0.2.0"
+description = "A CLI and web wrapper around vLLM bench."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "OpenAI Codex" }]
+dependencies = [
+  "aiohttp>=3.13.0"
+]
+
+[project.optional-dependencies]
+bench = [
+  "vllm[bench]"
+]
+
+[project.scripts]
+llmbench = "llmbench.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["llmbench*"]
