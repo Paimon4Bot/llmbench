@@ -11,7 +11,7 @@ SHORT_OPTION_ALIASES = {
     "-o": "--output-dir",
 }
 
-VALUE_OPTIONS = {"--result-dir", "--result-filename", "--output-json", "--output-dir", "--fake-sleep"}
+VALUE_OPTIONS = {"--result-dir", "--result-filename", "--output-json", "--output-dir", "--fake-sleep", "--header"}
 
 
 def _parse_args(argv: list[str]) -> tuple[list[str], dict[str, str], set[str]]:
@@ -79,6 +79,20 @@ def main(argv: list[str]) -> int:
     if "--fake-live-output" in flags:
         print("fake live stdout chunk 1", flush=True)
         print("fake live stderr chunk 1", file=sys.stderr, flush=True)
+    if "--fake-live-cr-output" in flags:
+        sys.stdout.write("fake live stdout carriage 1\r")
+        sys.stdout.flush()
+        sys.stderr.write("fake live stderr carriage 1\r")
+        sys.stderr.flush()
+        time.sleep(0.2)
+        sys.stdout.write("fake live stdout carriage 2\r")
+        sys.stdout.flush()
+        sys.stderr.write("fake live stderr carriage 2\r")
+        sys.stderr.flush()
+    if "--fake-sensitive-stdout" in flags:
+        print("distributed_init_method=tcp://10.10.10.6:41616", flush=True)
+    if "--fake-header-echo" in flags:
+        print(f"header=['{options.get('--header', '')}']", flush=True)
     if sleep_seconds > 0:
         time.sleep(sleep_seconds)
 
@@ -101,6 +115,11 @@ def main(argv: list[str]) -> int:
         },
         "flags": sorted(flags),
     }
+    if "--fake-all-requests-fail" in flags:
+        result["completed"] = 0
+        result["failed"] = 1
+        result["Successful requests"] = 0
+        result["Failed requests"] = 1
 
     if top_level == "serve":
         if "--result-dir" not in options or "--save-result" not in flags:
@@ -113,7 +132,7 @@ def main(argv: list[str]) -> int:
         if "--save-result" in flags or "--result-dir" in options:
             print(f"{top_level} rejects serve-style result flags", file=sys.stderr)
             return 2
-    elif top_level == "sweep" and sweep_subcommand in {"serve", "serve_sla", "serve_workload", "startup"}:
+    elif top_level == "sweep" and sweep_subcommand in {"serve", "serve_workload", "startup"}:
         if "--output-dir" not in options:
             print(f"{command_name} expects --output-dir", file=sys.stderr)
             return 2
@@ -140,7 +159,7 @@ def main(argv: list[str]) -> int:
             result_path = Path(output_json)
             result_path.parent.mkdir(parents=True, exist_ok=True)
             result_path.write_text(json.dumps(result, ensure_ascii=True), encoding="utf-8")
-    elif top_level == "sweep" and sweep_subcommand in {"serve", "serve_sla", "serve_workload", "startup"}:
+    elif top_level == "sweep" and sweep_subcommand in {"serve", "serve_workload", "startup"}:
         output_dir = options.get("--output-dir")
         if output_dir:
             result_dir = Path(output_dir) / sweep_subcommand
@@ -149,6 +168,8 @@ def main(argv: list[str]) -> int:
             result_path = result_dir / "summary.json"
             result_path.write_text(json.dumps(result, ensure_ascii=True), encoding="utf-8")
 
+    if "--fake-all-requests-fail" in flags:
+        print("All benchmark requests failed. The benchmark target is likely misconfigured.", file=sys.stderr)
     print(f"fake vllm bench {command_name} completed")
     return 0
 
