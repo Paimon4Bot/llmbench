@@ -7,7 +7,7 @@ name = "llmbench"
 version = "0.2.0"
 description = "A CLI and web wrapper around vLLM bench."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 license = { text = "MIT" }
 authors = [{ name = "OpenAI Codex" }]
 dependencies = [
@@ -16,7 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 bench = [
-  "vllm[bench]"
+  "pyarrow<21",
+  "vllm[bench]>=0.19.0"
 ]
 
 [project.scripts]
